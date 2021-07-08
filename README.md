@@ -46,8 +46,8 @@ dependencies {
 ## Usage
 
 ```typescript
-import { useState } from 'react';
-import { PermissionsAndroid } from 'react-native';
+import { useState, useEffect } from 'react';
+import { PermissionsAndroid, NativeEventEmitter, EmitterSubscription } from 'react-native';
 import CallsHistory, { CallsHistoryItem } from 'react-native-calls-history';
 
 interface State {
@@ -139,16 +139,19 @@ const CallsHistoryScreen = () => {
   const { state, loadFirst, loadBefore, loadAfter } = useCallsHistory();
 
   useEffect(() => {
-    const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_CALL_LOG)
-    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-      loadFirst();
-
-      CallsHistory.registerOnChangeListener();
-      const emitter = new NativeEventEmitter();
-      callHistoryChangeDataListener = emitter.addListener('CallsHistoryChangeData', () => {
-        loadBefore();
+    let callHistoryChangeDataListener: EmitterSubscription | null = null;
+    PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_CALL_LOG)
+      .then((granted) => {
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          loadFirst();
+    
+          CallsHistory.registerOnChangeListener();
+          const emitter = new NativeEventEmitter();
+          callHistoryChangeDataListener = emitter.addListener('CallsHistoryChangeData', () => {
+            loadBefore();
+          });
+        }
       });
-    }
 
     return () => {
       CallsHistory.removeOnChangeListener();
