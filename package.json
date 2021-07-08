@@ -1,0 +1,28 @@
+{
+  "name": "react-native-calls-history",
+  "version": "1.0.0",
+  "description": "load calls history with cursor based navigation",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "author": "Evgeny Razumov (enniel)",
+  "license": "MIT",
+  "homepage": "https://github.com/enniel/react-native-calls-history",
+  "bugs": {
+    "url": "https://github.com/enniel/react-native-calls-history/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/enniel/react-native-calls-history.git"
+  },
+  "scripts": {
+    "clean:js": "rm -rf node_modules package-lock.json",
+    "clean:android": "rm -rf android/build",
+    "clean": "npm run clean:js && npm run clean:android",
+    "fresh": "npm run clean && npm i --legacy-peer-deps --no-optional"
+  },
+  "devDependencies": {
+    "@types/react-native": "0.64.10",
+    "react": "17.0.1",
+    "react-native": "0.64.2"
+  }
+}

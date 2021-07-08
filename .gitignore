@@ -1,0 +1,7 @@
+node_modules
+package-lock.json
+.gradle
+.idea
+local.properties
+build
+.DS_Store
