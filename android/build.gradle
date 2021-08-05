@@ -1,25 +1,30 @@
-def safeExtGet(prop, fallback) {
-    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
-}
-
-def kotlinVersion = safeExtGet('kotlinVersion', '1.4.10')
-def reactNativeVersion = safeExtGet('reactNativeVersion', '+')
-
 buildscript {
-    repositories {
-        google()
-        jcenter()
-    }
+    // The Android Gradle plugin is only required when opening the android folder stand-alone.
+    // This avoids unnecessary downloads and potential conflicts when the library is included as a
+    // module dependency in an application project.
+    if (project == rootProject) {
+        repositories {
+            google()
+            mavenCentral()
+        }
 
-    dependencies {
-        classpath("com.android.tools.build:gradle:4.1.3")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+        def buildGradleVersion = ext.has('buildGradlePluginVersion') ? ext.get('buildGradlePluginVersion') : '4.2.0'
+        def kotlinVersion = ext.has('kotlinVersion') ? ext.get('kotlinVersion') : '1.4.10'
+
+        dependencies {
+            classpath("com.android.tools.build:gradle:$buildGradleVersion")
+            classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+        }
     }
 }
 
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
+
+def safeExtGet(prop, fallback) {
+    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+}
 
 android {
     compileSdkVersion safeExtGet('compileSdkVersion', 28)
@@ -50,10 +55,13 @@ repositories {
         // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
         url "$rootDir/../node_modules/react-native/android"
     }
-    jcenter()
+    mavenCentral()
 }
 
 dependencies {
+    def kotlinVersion = safeExtGet('kotlinVersion', '1.4.10')
+    def reactNativeVersion = safeExtGet('reactNativeVersion', '+')
+
     compileOnly "com.facebook.react:react-native:$reactNativeVersion"
 
     implementation "androidx.core:core-ktx:1.6.0"
