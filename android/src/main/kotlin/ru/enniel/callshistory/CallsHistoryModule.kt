@@ -148,34 +148,35 @@ class CallsHistoryModule(private val reactContext: ReactApplicationContext) : Re
             val nameColumnIndex = cursor.getColumnIndex(CallLog.Calls.CACHED_NAME)
 
             while (cursor.moveToNext()) {
-                val phoneNumber = cursor.getString(numberColumnIndex)
-                val timestampStr = cursor.getString(dateColumnIndex)
-                val type = resolveCallType(cursor.getInt(typeColumnIndex))
-                val duration = cursor.getInt(durationColumnIndex)
-                var name = cursor.getString(nameColumnIndex)
+                val phoneNumber = cursor.getString(numberColumnIndex)?.trim()
+                if (phoneNumber != null && phoneNumber.isNotEmpty()) {
+                    val timestampStr = cursor.getString(dateColumnIndex)
+                    val type = resolveCallType(cursor.getInt(typeColumnIndex))
+                    val duration = cursor.getInt(durationColumnIndex)
+                    var name = cursor.getString(nameColumnIndex)
 
-                var photoUri: String? = null
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    val photoUriColumnIndex = cursor.getColumnIndex(CallLog.Calls.CACHED_PHOTO_URI)
-                    photoUri = cursor.getString(photoUriColumnIndex)
-                }
-
-                if (name == null || photoUri == null) {
-                    val contact = getContactByPhoneNumber(phoneNumber)
-                    if (contact != null) {
-                        name = contact.name ?: name
-                        photoUri = contact.photoUri ?: photoUri
+                    var photoUri: String? = null
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        val photoUriColumnIndex = cursor.getColumnIndex(CallLog.Calls.CACHED_PHOTO_URI)
+                        photoUri = cursor.getString(photoUriColumnIndex)
                     }
-                }
 
-                val cursorJSON = JSONObject()
-                cursorJSON.put("timestamp", timestampStr)
-                val itemCursor = Base64.encodeToString(cursorJSON.toString().toByteArray(), Base64.DEFAULT)
+                    if (name == null || photoUri == null) {
+                        val contact = getContactByPhoneNumber(phoneNumber)
+                        if (contact != null) {
+                            name = contact.name ?: name
+                            photoUri = contact.photoUri ?: photoUri
+                        }
+                    }
 
-                val df = SimpleDateFormat("HH:mm", Locale.getDefault())
-                val time = df.format(Date(timestampStr.toLong()))
+                    val cursorJSON = JSONObject()
+                    cursorJSON.put("timestamp", timestampStr)
+                    val itemCursor = Base64.encodeToString(cursorJSON.toString().toByteArray(), Base64.DEFAULT)
 
-                val item = CallLogItem(
+                    val df = SimpleDateFormat("HH:mm", Locale.getDefault())
+                    val time = df.format(Date(timestampStr.toLong()))
+
+                    val item = CallLogItem(
                         phoneNumber = phoneNumber,
                         duration = duration,
                         name = name,
@@ -184,19 +185,20 @@ class CallsHistoryModule(private val reactContext: ReactApplicationContext) : Re
                         time = time,
                         type = type,
                         cursor = itemCursor
-                )
-                result.items.add(item)
-                if (cursor.isLast) {
-                    val afterCursorJSON = JSONObject()
-                    afterCursorJSON.put("timestamp", timestampStr)
-                    afterCursorJSON.put("direction", Direction.AFTER)
-                    result.pagination.after = Base64.encodeToString(afterCursorJSON.toString().toByteArray(), Base64.DEFAULT)
-                }
-                if (cursor.isFirst) {
-                    val beforeCursorJSON = JSONObject()
-                    beforeCursorJSON.put("timestamp", timestampStr)
-                    beforeCursorJSON.put("direction", Direction.BEFORE)
-                    result.pagination.before = Base64.encodeToString(beforeCursorJSON.toString().toByteArray(), Base64.DEFAULT)
+                    )
+                    result.items.add(item)
+                    if (cursor.isLast) {
+                        val afterCursorJSON = JSONObject()
+                        afterCursorJSON.put("timestamp", timestampStr)
+                        afterCursorJSON.put("direction", Direction.AFTER)
+                        result.pagination.after = Base64.encodeToString(afterCursorJSON.toString().toByteArray(), Base64.DEFAULT)
+                    }
+                    if (cursor.isFirst) {
+                        val beforeCursorJSON = JSONObject()
+                        beforeCursorJSON.put("timestamp", timestampStr)
+                        beforeCursorJSON.put("direction", Direction.BEFORE)
+                        result.pagination.before = Base64.encodeToString(beforeCursorJSON.toString().toByteArray(), Base64.DEFAULT)
+                    }
                 }
             }
             cursor.close()
