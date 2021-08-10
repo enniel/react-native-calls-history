@@ -113,7 +113,7 @@ class CallsHistoryModule(private val reactContext: ReactApplicationContext) : Re
             }
 
             var selection: String? = null
-            var selectionArgs: Array<String>? = null
+            val selectionArgs = mutableListOf<String>()
             val paginationCursorBase64Str = filter?.getString("cursor")
             if (paginationCursorBase64Str != null) {
                 val paginationCursorStr = Base64.decode(paginationCursorBase64Str, Base64.URL_SAFE or Base64.NO_WRAP).toString(Charsets.UTF_8)
@@ -128,14 +128,45 @@ class CallsHistoryModule(private val reactContext: ReactApplicationContext) : Re
                 if (direction == Direction.BEFORE) {
                     selection = "${CallLog.Calls.DATE} > ?"
                 }
-                selectionArgs = arrayOf(timestamp)
+                selectionArgs.add(timestamp)
             }
 
             var sort = "${CallLog.Calls.DATE} DESC"
             if (limit > -1) {
                 sort += " LIMIT $limit"
             }
-            val cursor = reactApplicationContext.contentResolver.query(CallLog.Calls.CONTENT_URI, projection, selection, selectionArgs, sort)
+
+            val search = filter?.getString("search")
+
+            val uri = CallLog.Calls.CONTENT_URI
+            if (search != null && search.isNotEmpty()) {
+                if (selection == null) {
+                    selection = ""
+                }
+                if (selection.isNotEmpty()) {
+                    selection += " AND "
+                }
+                val searchFields = mutableListOf(
+                    CallLog.Calls.NUMBER,
+                    CallLog.Calls.CACHED_NAME
+                )
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    searchFields.add(CallLog.Calls.CACHED_NORMALIZED_NUMBER)
+                }
+                val searchQueryItems = mutableListOf<String>()
+                searchFields.forEach {
+                    searchQueryItems.add("$it LIKE ?")
+                }
+                selection += searchQueryItems.joinToString(" OR ", "(", ")")
+                selectionArgs.add("%${search}%")
+                selectionArgs.add("%${search}%")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    selectionArgs.add("%${search}%")
+                }
+            }
+
+            val cursor = reactApplicationContext.contentResolver.query(uri, projection, selection, selectionArgs.toTypedArray(), sort)
+
             val result = CallLogResult()
             if (cursor == null) {
                 return@async result

@@ -22,7 +22,7 @@ declare module 'react-native-calls-history' {
     };
   }
   export default class CallsHistory {
-    static load(limit: number, cursor?: string | null): Promise<CallsHistoryResult>;
+    static load(limit: number, cursor?: string | null, search?: string | null): Promise<CallsHistoryResult>;
     static loadAll(): Promise<CallsHistoryResult>;
     static registerOnChangeListener(): void;
     static removeOnChangeListener(): void;
